@@ -3,17 +3,30 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from functools import wraps
 
 app = Flask(__name__)
-# Секрет для сессий: берём из переменной, если нет — заглушка (только для теста)
+# Используем переменную окружения или тестовый ключ
 app.secret_key = os.environ.get('SECRET_KEY', 'kito4kashop-super-secret-2026-test')
 
-# Пароли и логины берём из переменных окружения Render
+# Логины и пароли (настраиваются в Render в Environment Variables)
 ADMIN_USER_MAIN = 'banmax777'
-ADMIN_PASS_MAIN = os.environ['ADMIN_PASS_MAIN']
+ADMIN_PASS_MAIN = os.environ.get('ADMIN_PASS_MAIN', 'change_me_in_render')
 
 ADMIN_USER_HELPER = 'lox55'
-ADMIN_PASS_HELPER = os.environ['ADMIN_PASS_HELPER']
+ADMIN_PASS_HELPER = os.environ.get('ADMIN_PASS_HELPER', 'change_me_in_render')
 
-# Хранилище заявок (в памяти, при перезапуске пропадёт)
+# Словарь для красивых названий в админке
+KIT_NAMES = {
+    'kit-demon-clan-1500k': 'Кит клана демона (1 500 000)',
+    'kit-banmax777-130k':   'Кит banmax777 (130 000)',
+    'kit-banmax777-2.0-250k':'Кит banmax777 2.0 (250 000)',
+    'kit-security-70k':     'Кит сеферити (70 000)',
+    'kit-demon-non-clan-120k':'Кит демона (не клан) (120 000)',
+    'kit-sponsor-300k':     'Кит спонсера (300 000)',
+    'kit-iqqo-300k':        'Кит iqqo (300 000)',
+    'kit-bot-bot-10k':      'Кит боты бота (10 000)',
+    'kit-mix-200k':         'Кит микс (200 000)',
+    'kit-toxic-120k':       'Кит токсик (120 000)'
+}
+
 orders = []
 next_id = 1
 
@@ -32,13 +45,11 @@ def admin_login():
         user = request.form.get('user')
         password = request.form.get('password')
 
-        # Проверка главного админа
         if user == ADMIN_USER_MAIN and password == ADMIN_PASS_MAIN:
             session['username'] = user
             session['user_role'] = 'main'
             return redirect(url_for('admin'))
 
-        # Проверка помощника
         if user == ADMIN_USER_HELPER and password == ADMIN_PASS_HELPER:
             session['username'] = user
             session['user_role'] = 'helper'
@@ -46,7 +57,7 @@ def admin_login():
 
         error = 'Неверный логин или пароль!'
 
-    # autocomplete="off" на форме и "new-password" на поле — чтобы браузер не запоминал
+    # Обратите внимание: autocomplete="off" здесь отключает всплывающее окно браузера
     return f'''
     <form method="POST" style="text-align:center; margin-top:50px;" autocomplete="off">
       <h2>Вход в админку kito4kashop</h2>
@@ -59,20 +70,20 @@ def admin_login():
 
 @app.route('/')
 def shop():
-    # Если хочешь, сюда можно добавить товары прямо в шаблоне shop.html
     return render_template('shop.html')
 
 @app.route('/buy', methods=['POST'])
 def buy():
     global next_id
     nickname = request.form.get('nickname')
-    item = request.form.get('item')
+    item_code = request.form.get('item')
     
-    if nickname and item:
+    if nickname and item_code:
         orders.append({
             'id': next_id,
             'nickname': nickname,
-            'item': item,
+            'item_code': item_code,
+            'item_name': KIT_NAMES.get(item_code, item_code),
             'status': 'pending'
         })
         next_id += 1
