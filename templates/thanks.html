@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заказ принят!</title>
+    <!-- АВТООБНОВЛЕНИЕ КАЖДЫЕ 10 СЕКУНД -->
+    <meta http-equiv="refresh" content="10">
+    
+    <title>Статус заказа</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -25,15 +28,9 @@
             max-width: 400px;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        h1 {
-            margin: 0 0 0.5rem;
-            font-size: 2rem;
-        }
-        p {
-            font-size: 1.1rem;
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
-        }
+        h1 { margin: 0 0 0.5rem; font-size: 2rem; }
+        p { font-size: 1.1rem; line-height: 1.5; margin-bottom: 1.5rem; }
+        
         .details {
             background: rgba(0, 0, 0, 0.2);
             padding: 1rem;
@@ -41,9 +38,31 @@
             text-align: left;
             margin-bottom: 1.5rem;
         }
-        .details strong {
-            color: #ffd700;
+        .details strong { color: #ffd700; }
+
+        .status-box {
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: inline-block;
         }
+
+        /* Цвета статусов */
+        .pending { background: rgba(255, 191, 0, 0.3); color: #fff; border: 1px solid rgba(255,191,0,0.6); }
+        .accepted { background: rgba(46, 125, 50, 0.3); color: #4caf50; border: 1px solid #4caf50; }
+        .rejected { background: rgba(231, 76, 60, 0.3); color: #e74c3c; border: 1px solid #e74c3c; }
+
+        .warp-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-left: 5px solid #ffd700;
+            text-align: left;
+            display: none; /* Скрыто по умолчанию */
+        }
+
         .btn {
             display: inline-block;
             background: #ffd700;
@@ -52,43 +71,41 @@
             border-radius: 6px;
             text-decoration: none;
             font-weight: 600;
-            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
         }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-        }
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4); }
     </style>
 </head>
 <body>
     <div class="card">
-        <div style="margin-bottom: 1rem;">
-            <div class="spinner"></div>
-            <span>Ваш заказ обрабатывается…</span>
-        </div>
-        <h1>✅ Спасибо!</h1>
-        <p>Мы получили твой заказ. Администратор скоро свяжется с тобой.</p>
+        <h1>Твой заказ</h1>
 
         <div class="details">
             <p><strong>Ник:</strong> {{ nickname }}</p>
             <p><strong>Товар:</strong> {{ item }}</p>
-            <p><strong>Статус:</strong> {{ status }}</p>
             <p><strong>ID заказа:</strong> #{{ order_id }}</p>
         </div>
+
+        <!-- Блок статуса -->
+        <div class="status-box {{ status }}">
+            {% if status == 'pending' %}
+                ⏳ Ожидает обработки... (страница обновляется каждые 10 сек)
+            {% elif status == 'accepted' %}
+                ✅ Одобрено!
+            {% else %}
+                ❌ Отклонено
+            {% endif %}
+        </div>
+
+        <!-- Сообщение про варп (показывается только если принято) -->
+        {% if status == 'accepted' %}
+        <div class="warp-info" style="display: block;">
+            <p>🎉 Поздравляем! Товар готов.</p>
+            <p><strong>Телепортируйся на warp <span style="color:#ffd700">kito4kashop</span>, чтобы забрать его!</strong></p>
+        </div>
+        {% elif status == 'rejected' %}
+        <p style="color: #e74c3c;">Если не согласен с отказом — напиши админу в Discord.</p>
+        {% endif %}
 
         <a href="/" class="btn">Вернуться в магазин</a>
     </div>
