@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, redirect, url_for, session
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -7,19 +7,15 @@ from sqlalchemy.ext.declarative import declarative_base
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_me_123')
 
-# Получаем URL из переменной окружения (Render подставит её автоматически)
+# Настройка подключения к PostgreSQL
 db_url = os.getenv('DATABASE_URL')
-
-# Исправляем префикс, если нужно: postgres:// -> postgresql://
 if db_url and db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
 
-# Настраиваем SQLAlchemy
 engine = create_engine(db_url)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
-# Модель таблицы orders
 class Order(Base):
     __tablename__ = 'orders'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -27,11 +23,9 @@ class Order(Base):
     item = Column(String)
     status = Column(String, default='pending')
 
-# Создаём таблицы при старте (если их ещё нет)
 with app.app_context():
     Base.metadata.create_all(engine)
 
-# Пароли из переменных окружения (или дефолтные для тестов)
 PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55', 'loxlox123')
 PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX', 'banban123')
 
@@ -71,11 +65,11 @@ def admin():
 
         if login_attempt == 'lox55' and pass_attempt == PASS_LOX55:
             session['account_type'] = 'helper'
-            return render_template('admin.html', logged_in=True, account_type='helper')
+            return redirect(url_for('admin'))
 
         if login_attempt == 'banmax777' and pass_attempt == PASS_BANMAX:
             session['account_type'] = 'main'
-            return render_template('admin.html', logged_in=True, account_type='main')
+            return redirect(url_for('admin'))
 
         return render_template('admin.html', logged_in=False, account_type=None)
 
@@ -88,6 +82,36 @@ def admin():
         return render_template('admin.html', logged_in=True, account_type=account_type, orders=orders)
 
     return render_template('admin.html', logged_in=False, account_type=None)
+
+# Новый маршрут: менять статус заказа (Принять / Отказать)
+@app.route('/admin/update_status', methods=['POST'])
+def update_status():
+    # Проверяем, что админ залогинен
+    if not session.get('account_type'):
+        return redirect(url_for('admin'))
+
+    order_id = request.form.get('order_id')
+    new_status = request.form.get('new_status')
+
+    if not order_id or new_status not in ('accepted', 'rejected'):
+        return "Неверные данные", 400
+
+    db = SessionLocal()
+    try:
+        order = db.query(Order).filter_by(id=order_id).first()
+        if not order:
+            return "Заказ не найден", 404
+
+        order.status = new_status
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return f"Ошибка: {e}", 500
+    finally:
+        db.close()
+
+    # После изменения статуса возвращаем обратно в админку
+    return redirect(url_for('admin'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
