@@ -1,14 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, session
 import sqlite3
 import os
 
 app = Flask(__name__)
-# Секретный ключ нужен для сессий (чтобы помнил, что ты залогинен во время одной сессии)
-app.secret_key = 'super_secret_key_change_me_123'
+
+# Секрет для сессий: из Render или запасной
+app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_me_123')
 
 DB_NAME = 'shop.db'
-ADMIN_LOGIN = 'admin'
-ADMIN_PASS = '1234'
+
+# Пароли берём из настроек Render. Если нет — ставим по умолчанию
+PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55', 'lox55pass')
+PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX', 'banmaxpass')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME)
@@ -16,7 +19,6 @@ def get_db_connection():
     return conn
 
 def init_db():
-    # Создаём базу, если её нет
     conn = get_db_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS orders (
@@ -51,34 +53,37 @@ def buy():
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    # Проверяем, залогинен ли админ
-    logged_in = 'admin_password' in session and session['admin_password'] == ADMIN_PASS
+    # Сессия хранит тип аккаунта: 'helper' или 'main'
+    account_type = session.get('account_type')
 
-    # Если пришёл POST (попытка входа) и ещё не залогинен
-    if request.method == 'POST' and not logged_in:
+    if request.method == 'POST':
         login_attempt = request.form.get('login')
         pass_attempt = request.form.get('password')
-        
-        if login_attempt == ADMIN_LOGIN and pass_attempt == ADMIN_PASS:
-            session['admin_password'] = ADMIN_PASS
-            logged_in = True
-        else:
-            # Неверный логин/пароль — показываем форму входа снова
-            return render_template('admin.html', logged_in=False)
 
-    # Если всё ещё не залогинен — показываем только форму входа
-    if not logged_in:
-        return render_template('admin.html', logged_in=False)
+        # Проверка для lox55 (помощник)
+        if login_attempt == 'lox55' and pass_attempt == PASS_LOX55:
+            session['account_type'] = 'helper'
+            return render_template('admin.html', logged_in=True, account_type='helper')
 
-    # Если залогинен — получаем все заявки из базы
-    conn = get_db_connection()
-    orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
-    conn.close()
+        # Проверка для banmax777 (главный)
+        if login_attempt == 'banmax777' and pass_attempt == PASS_BANMAX:
+            session['account_type'] = 'main'
+            return render_template('admin.html', logged_in=True, account_type='main')
 
-    return render_template('admin.html', logged_in=True, orders=orders)
+        # Если логин/пароль не подошли — показываем форму входа
+        return render_template('admin.html', logged_in=False, account_type=None)
+
+    # Если не POST, а просто GET — показываем то, что уже в сессии
+    if account_type:
+        conn = get_db_connection()
+        orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
+        conn.close()
+        return render_template('admin.html', logged_in=True, account_type=account_type, orders=orders)
+
+    # Если сессии нет — форма входа
+    return render_template('admin.html', logged_in=False, account_type=None)
 
 if __name__ == '__main__':
     init_db()
-    # Порт берём из переменной окружения (так делает Railway), по умолчанию 5000
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
