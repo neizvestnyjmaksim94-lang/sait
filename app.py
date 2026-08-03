@@ -1,35 +1,39 @@
-from flask import Flask, render_template, request, session
-import sqlite3
 import os
+from flask import Flask, render_template, request, session
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
 app = Flask(__name__)
-
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_me_123')
 
-DB_NAME = 'shop.db'
+# Получаем URL из переменной окружения (Render подставит её автоматически)
+db_url = os.getenv('DATABASE_URL')
 
+# Исправляем префикс, если нужно: postgres:// -> postgresql://
+if db_url and db_url.startswith('postgres://'):
+    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+
+# Настраиваем SQLAlchemy
+engine = create_engine(db_url)
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
+
+# Модель таблицы orders
+class Order(Base):
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nickname = Column(String)
+    item = Column(String)
+    status = Column(String, default='pending')
+
+# Создаём таблицы при старте (если их ещё нет)
+with app.app_context():
+    Base.metadata.create_all(engine)
+
+# Пароли из переменных окружения (или дефолтные для тестов)
 PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55', 'loxlox123')
 PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX', 'banban123')
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    # Сразу проверяем и создаём таблицу, если вдруг её нет
-    create_table_if_missing(conn)
-    return conn
-
-def create_table_if_missing(conn):
-    """Гарантированно создаёт таблицу orders, если её нет"""
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nickname TEXT NOT NULL,
-            item TEXT NOT NULL,
-            status TEXT DEFAULT 'pending'
-        )
-    ''')
-    conn.commit()
 
 @app.route('/')
 def shop():
@@ -43,13 +47,19 @@ def buy():
     if not nickname or not item:
         return "Ошибка: заполни все поля!", 400
 
-    conn = get_db_connection()  # Тут сразу проверится и создастся таблица
-    conn.execute('INSERT INTO orders (nickname, item, status) VALUES (?, ?, ?)',
-                 (nickname, item, 'pending'))
-    conn.commit()
-    conn.close()
-    
-    return "Заявка отправлена! Менеджер свяжется с тобой."
+    db = SessionLocal()
+    try:
+        new_order = Order(nickname=nickname, item=item, status='pending')
+        db.add(new_order)
+        db.commit()
+        order_id = new_order.id
+    except Exception as e:
+        db.rollback()
+        return f"Ошибка при сохранении заказа: {e}", 500
+    finally:
+        db.close()
+
+    return render_template('thanks.html', nickname=nickname, item=item, status='Ожидает обработки', order_id=order_id)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -70,9 +80,11 @@ def admin():
         return render_template('admin.html', logged_in=False, account_type=None)
 
     if account_type:
-        conn = get_db_connection()
-        orders = conn.execute('SELECT * FROM orders ORDER BY id DESC').fetchall()
-        conn.close()
+        db = SessionLocal()
+        try:
+            orders = db.query(Order).order_by(Order.id.desc()).all()
+        finally:
+            db.close()
         return render_template('admin.html', logged_in=True, account_type=account_type, orders=orders)
 
     return render_template('admin.html', logged_in=False, account_type=None)
