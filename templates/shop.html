@@ -10,20 +10,16 @@
     input, select { padding: 10px; margin: 5px 0; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
     button { padding: 10px 20px; background-color: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
     button:hover { background-color: #c9302c; }
-    a { color: #d9534f; font-weight: bold; text-decoration: none; }
     hr { border: 0; border-top: 1px solid #ccc; width: 80%; margin: 20px auto; }
   </style>
 </head>
 <body>
   <h1>Магазин китов — kito4kashop</h1>
-
-  <a href="/admin">Вход в админку</a>
   <hr>
-
   <div class="card">
     <form action="/buy" method="POST">
       <label><strong>Твой ник в игре:</strong></label><br>
-      <input type="text" name="nickname" placeholder="Например: banmax777" required><br><br>
+      <input type="text" name="nickname" required><br><br>
 
       <label><strong>Выбери кит:</strong></label><br>
       <select name="item">
