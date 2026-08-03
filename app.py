@@ -5,10 +5,19 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_me_123')
 
+# 1. SECRET_KEY: Берем из Render. Если нет (для тестов на ПК) - ставим заглушку.
+# На Render обязательно должна быть переменная SECRET_KEY, иначе вход в админку не сохранится!
+secret_key_env = os.environ.get('SECRET_KEY')
+if not secret_key_env:
+    app.secret_key = 'dev-only-key-change-on-render'
+else:
+    app.secret_key = secret_key_env
+
+# 2. DATABASE_URL: Берем из Render (там уже лежит ссылка на базу)
 db_url = os.getenv('DATABASE_URL')
 if db_url and db_url.startswith('postgres://'):
+    # Render иногда отдает старый формат, конвертируем в новый для SQLAlchemy
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
 
 engine = create_engine(db_url)
@@ -22,11 +31,14 @@ class Order(Base):
     item = Column(String)
     status = Column(String, default='pending')
 
+# Создаем таблицы при старте (если их нет)
 with app.app_context():
     Base.metadata.create_all(engine)
 
-PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55', 'loxlox123')
-PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX', 'banban123')
+# 3. ПАРОЛИ АДМИНОВ: Берем ТОЧНО по именам из твоего скриншота!
+# Если в Render пусто - будет None, и вход не сработает (это правильно для безопасности)
+PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55')
+PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX')
 
 @app.route('/')
 def shop():
@@ -52,12 +64,11 @@ def buy():
     finally:
         db.close()
 
-    # Сразу показываем страницу «Ожидает»
-    return render_template('thanks.html', nickname=nickname, item=item, status='Ожидает обработки', order_id=order_id)
+    # Перенаправляем на страницу статуса с автообновлением
+    return redirect(url_for('order_status', order_id=order_id))
 
 @app.route('/order-status/<int:order_id>')
 def order_status(order_id):
-    """Страница, куда пользователь заходит, чтобы узнать финальный статус заказа"""
     db = SessionLocal()
     try:
         order = db.query(Order).filter_by(id=order_id).first()
@@ -67,24 +78,24 @@ def order_status(order_id):
     if not order:
         return "Заказ не найден", 404
 
-    # Тут логика сообщений для пользователя
-    if order.status == 'accepted':
-        message = "✅ Одобрено! Телепортируйся на warp <strong>kito4kashop</strong>, чтобы забрать товар."
-    elif order.status == 'rejected':
-        message = "❌ Отклонено. Если не согласен — напиши админу."
-    else:
-        message = "⏳ Статус: ожидает обработки. Администратор скоро примет решение."
-
-    return render_template('status.html', order=order, message=message)
+    return render_template(
+        'thanks.html',
+        nickname=order.nickname,
+        item=order.item,
+        status=order.status,
+        order_id=order.id
+    )
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     account_type = session.get('account_type')
 
+    # Если пришли с POST (попытка входа)
     if request.method == 'POST':
         login_attempt = request.form.get('login')
         pass_attempt = request.form.get('password')
 
+        # Сравниваем с паролями ИЗ RENDER (переменные окружения)
         if login_attempt == 'lox55' and pass_attempt == PASS_LOX55:
             session['account_type'] = 'helper'
             return redirect(url_for('admin'))
@@ -93,21 +104,25 @@ def admin():
             session['account_type'] = 'main'
             return redirect(url_for('admin'))
 
-        return render_template('admin.html', logged_in=False, account_type=None)
+        # Если пароль не подошел - показываем форму снова (можно добавить сообщение об ошибке)
+        return render_template('admin.html', logged_in=False, account_type=None, error="Неверный логин или пароль")
 
+    # Если уже залогинен - показываем заказы
     if account_type:
         db = SessionLocal()
         try:
-            # ВАЖНО: показываем ТОЛЬКО pending заказы
+            # Показываем только ожидающие заказы
             orders = db.query(Order).filter_by(status='pending').order_by(Order.id.desc()).all()
         finally:
             db.close()
         return render_template('admin.html', logged_in=True, account_type=account_type, orders=orders)
 
-    return render_template('admin.html', logged_in=False, account_type=None)
+    # Не залогинен - форма входа
+    return render_template('admin.html', logged_in=False, account_type=None, error=None)
 
 @app.route('/admin/update_status', methods=['POST'])
 def update_status():
+    # Защита: если нет сессии, кидаем в админку
     if not session.get('account_type'):
         return redirect(url_for('admin'))
 
