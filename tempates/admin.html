@@ -1,56 +1,98 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>Админка kito4kashop</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; }
+    h1 { text-align: center; color: #333; }
+    .login-box, .admin-box { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input { padding: 10px; width: 100%; margin: 5px 0; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 10px 20px; background-color: #333; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button.ok { background-color: green; }
+    button.reject { background-color: red; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f8f9fa; }
+    .error { color: red; text-align: center; margin-bottom: 15px; }
+    .logout-link { float: right; color: #d9534f; font-weight: bold; text-decoration: none; }
+  </style>
 </head>
 <body>
-  <div style="text-align:center; padding:20px;">
+
+  {% if welcome_msg %}
+    <!-- Режим АДМИНКИ (если залогинен) -->
+    <a href="/logout" class="logout-link">Выйти из админки</a>
     <h1>{{ welcome_msg }}</h1>
-    <a href="/logout" style="color:#999;">Выйти</a>
-    <hr>
+    
+    <div class="admin-box">
+      {% if not orders %}
+        <p style="text-align:center; color:#666;">Пока нет новых заявок.</p>
+      {% else %}
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Ник игрока</th>
+              <th>Товар</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td>{{ order.id }}</td>
+              <td>{{ order.nickname }}</td>
+              <td>{{ order.item_name }}</td>
+              <td>
+                {% if order.status == 'pending' %}<span style="color:orange;">В ожидании</span>
+                {% elif order.status == 'approved' %}<span style="color:green;">Одобрено</span>
+                {% else %}<span style="color:red;">Отклонено</span>{% endif %}
+              </td>
+              <td style="text-align:center;">
+                {% if order.status == 'pending' %}
+                  <form action="/approve" method="POST" style="display:inline; margin:0 5px;">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="ok">OK</button>
+                  </form>
+                  <form action="/approve" method="POST" style="display:inline; margin:0 5px;">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="reject">X</button>
+                  </form>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
 
-    <table style="margin:20px auto; border-collapse:collapse; text-align:left;">
-      <thead>
-        <tr style="background:#eee;">
-          <th style="padding:10px; border:1px solid #ccc;">ID</th>
-          <th style="padding:10px; border:1px solid #ccc;">Ник</th>
-          <th style="padding:10px; border:1px solid #ccc;">Товар</th>
-          <th style="padding:10px; border:1px solid #ccc;">Статус</th>
-          <th style="padding:10px; border:1px solid #ccc;">Действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for order in orders %}
-        <tr>
-          <td style="padding:10px; border:1px solid #ccc;">{{ order.id }}</td>
-          <td style="padding:10px; border:1px solid #ccc;">{{ order.nickname }}</td>
-          <td style="padding:10px; border:1px solid #ccc;">{{ order.item_name }}</td>
-          <td style="padding:10px; border:1px solid #ccc; color:#999;">{{ order.status }}</td>
-          <td style="padding:10px; border:1px solid #ccc;">
-            {% if order.status == 'pending' %}
-            <form action="/approve" method="POST" style="display:inline;">
-              <input type="hidden" name="order_id" value="{{ order.id }}">
-              <input type="hidden" name="action" value="approve">
-              <button type="submit" style="padding:5px 10px; background:green; color:white; border:none;">Одобрить</button>
-            </form>
-            <form action="/approve" method="POST" style="display:inline;">
-              <input type="hidden" name="order_id" value="{{ order.id }}">
-              <input type="hidden" name="action" value="reject">
-              <button type="submit" style="padding:5px 10px; background:red; color:white; border:none;">Отклонить</button>
-            </form>
-            {% else %}
-            {{ order.status }}
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% else %}
+    <!-- Режим ВХОДА (если НЕ залогинен) -->
+    <h1>Вход в админку kito4kashop</h1>
+    
+    <div class="login-box">
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+      
+      <form method="POST" autocomplete="off">
+        <label>Логин:</label>
+        <input type="text" name="user" placeholder="banmax777 или lox55" required>
+        
+        <label>Пароль:</label>
+        <input type="password" name="password" placeholder="Введите пароль" required>
+        
+        <button type="submit" style="width:100%; margin-top:10px;">Войти</button>
+      </form>
+    </div>
+  {% endif %}
 
-    {% if not orders %}
-    <p>Пока нет заявок.</p>
-    {% endif %}
-  </div>
 </body>
 </html>
