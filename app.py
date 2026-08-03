@@ -4,24 +4,24 @@ import os
 
 app = Flask(__name__)
 
-# Секрет для сессий: из Render или запасной
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_me_123')
 
 DB_NAME = 'shop.db'
 
-# Пароли берём из настроек Render. Если нет — ставим по умолчанию
 PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55', 'loxlox123')
 PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX', 'banban123')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
+    # Сразу проверяем и создаём таблицу, если вдруг её нет
+    create_table_if_missing(conn)
     return conn
 
-def init_db():
-    """Создаёт таблицу orders, если её нет"""
-    conn = get_db_connection()
-    conn.execute('''
+def create_table_if_missing(conn):
+    """Гарантированно создаёт таблицу orders, если её нет"""
+    cursor = conn.cursor()
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nickname TEXT NOT NULL,
@@ -30,11 +30,6 @@ def init_db():
         )
     ''')
     conn.commit()
-    conn.close()
-
-# ВАЖНО: запускаем создание таблицы сразу при импорте файла,
-# чтобы таблица точно была до первого запроса
-init_db()
 
 @app.route('/')
 def shop():
@@ -48,8 +43,7 @@ def buy():
     if not nickname or not item:
         return "Ошибка: заполни все поля!", 400
 
-    conn = get_db_connection()
-    # Теперь таблица точно существует, ошибка не повторится
+    conn = get_db_connection()  # Тут сразу проверится и создастся таблица
     conn.execute('INSERT INTO orders (nickname, item, status) VALUES (?, ?, ?)',
                  (nickname, item, 'pending'))
     conn.commit()
@@ -84,6 +78,5 @@ def admin():
     return render_template('admin.html', logged_in=False, account_type=None)
 
 if __name__ == '__main__':
-    # Этот блок нужен только если ты запускаешь локально на ПК
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
