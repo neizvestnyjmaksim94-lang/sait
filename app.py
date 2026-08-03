@@ -3,17 +3,17 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from functools import wraps
 
 app = Flask(__name__)
-# Секрет для сессий. Лучше тоже вынести в переменные, но для теста можно оставить
-app.secret_key = os.environ.get('SECRET_KEY', 'kito4kashop-super-secure-2026')
+# Секрет для сессий: берём из переменной, если нет — заглушка (только для теста)
+app.secret_key = os.environ.get('SECRET_KEY', 'kito4kashop-super-secret-2026-test')
 
-# Пароли берём из переменных окружения (их ты задашь в Render)
+# Пароли и логины берём из переменных окружения Render
 ADMIN_USER_MAIN = 'banmax777'
 ADMIN_PASS_MAIN = os.environ['ADMIN_PASS_MAIN']
 
 ADMIN_USER_HELPER = 'lox55'
 ADMIN_PASS_HELPER = os.environ['ADMIN_PASS_HELPER']
 
-# Хранилище заявок (исчезнет при перезапуске Render — это нормально для теста)
+# Хранилище заявок (в памяти, при перезапуске пропадёт)
 orders = []
 next_id = 1
 
@@ -32,13 +32,13 @@ def admin_login():
         user = request.form.get('user')
         password = request.form.get('password')
 
-        # Проверяем главного админа
+        # Проверка главного админа
         if user == ADMIN_USER_MAIN and password == ADMIN_PASS_MAIN:
             session['username'] = user
             session['user_role'] = 'main'
             return redirect(url_for('admin'))
 
-        # Проверяем помощника
+        # Проверка помощника
         if user == ADMIN_USER_HELPER and password == ADMIN_PASS_HELPER:
             session['username'] = user
             session['user_role'] = 'helper'
@@ -46,11 +46,12 @@ def admin_login():
 
         error = 'Неверный логин или пароль!'
 
+    # autocomplete="off" на форме и "new-password" на поле — чтобы браузер не запоминал
     return f'''
-    <form method="POST" style="text-align:center; margin-top:50px;">
+    <form method="POST" style="text-align:center; margin-top:50px;" autocomplete="off">
       <h2>Вход в админку kito4kashop</h2>
       <input name="user" placeholder="Логин" required style="padding:8px;"><br><br>
-      <input type="password" name="password" placeholder="Пароль" required style="padding:8px;"><br><br>
+      <input type="password" name="password" placeholder="Пароль" required style="padding:8px;" autocomplete="new-password"><br><br>
       <button type="submit" style="padding:10px 20px; background:#333; color:white;">Войти</button>
       {f'<p style="color:red;">{error}</p>' if error else ''}
     </form>
@@ -58,6 +59,7 @@ def admin_login():
 
 @app.route('/')
 def shop():
+    # Если хочешь, сюда можно добавить товары прямо в шаблоне shop.html
     return render_template('shop.html')
 
 @app.route('/buy', methods=['POST'])
@@ -65,6 +67,7 @@ def buy():
     global next_id
     nickname = request.form.get('nickname')
     item = request.form.get('item')
+    
     if nickname and item:
         orders.append({
             'id': next_id,
@@ -73,6 +76,7 @@ def buy():
             'status': 'pending'
         })
         next_id += 1
+    
     return redirect('/')
 
 @app.route('/admin')
