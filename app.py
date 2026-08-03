@@ -7,7 +7,6 @@ from sqlalchemy.ext.declarative import declarative_base
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_me_123')
 
-# Настройка подключения к PostgreSQL
 db_url = os.getenv('DATABASE_URL')
 if db_url and db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
@@ -53,7 +52,30 @@ def buy():
     finally:
         db.close()
 
+    # Сразу показываем страницу «Ожидает»
     return render_template('thanks.html', nickname=nickname, item=item, status='Ожидает обработки', order_id=order_id)
+
+@app.route('/order-status/<int:order_id>')
+def order_status(order_id):
+    """Страница, куда пользователь заходит, чтобы узнать финальный статус заказа"""
+    db = SessionLocal()
+    try:
+        order = db.query(Order).filter_by(id=order_id).first()
+    finally:
+        db.close()
+
+    if not order:
+        return "Заказ не найден", 404
+
+    # Тут логика сообщений для пользователя
+    if order.status == 'accepted':
+        message = "✅ Одобрено! Телепортируйся на warp <strong>kito4kashop</strong>, чтобы забрать товар."
+    elif order.status == 'rejected':
+        message = "❌ Отклонено. Если не согласен — напиши админу."
+    else:
+        message = "⏳ Статус: ожидает обработки. Администратор скоро примет решение."
+
+    return render_template('status.html', order=order, message=message)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
@@ -76,17 +98,16 @@ def admin():
     if account_type:
         db = SessionLocal()
         try:
-            orders = db.query(Order).order_by(Order.id.desc()).all()
+            # ВАЖНО: показываем ТОЛЬКО pending заказы
+            orders = db.query(Order).filter_by(status='pending').order_by(Order.id.desc()).all()
         finally:
             db.close()
         return render_template('admin.html', logged_in=True, account_type=account_type, orders=orders)
 
     return render_template('admin.html', logged_in=False, account_type=None)
 
-# Новый маршрут: менять статус заказа (Принять / Отказать)
 @app.route('/admin/update_status', methods=['POST'])
 def update_status():
-    # Проверяем, что админ залогинен
     if not session.get('account_type'):
         return redirect(url_for('admin'))
 
@@ -110,7 +131,6 @@ def update_status():
     finally:
         db.close()
 
-    # После изменения статуса возвращаем обратно в админку
     return redirect(url_for('admin'))
 
 if __name__ == '__main__':
