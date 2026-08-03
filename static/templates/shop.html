@@ -1,35 +1,35 @@
 <!DOCTYPE html>
 <html>
-<head><title>kito4kashop</title></head>
-<body style="text-align:center; font-family:Arial;">
-  <h1>kito4kashop</h1>
-  <div style="border:2px solid #ccc; padding:20px; display:inline-block; text-align:left;">
-    <h3>Товары:</h3>
-    <ul style="list-style:none; padding-left:0;">
-      <li>Кит токсик — 120к</li>
-      <li>Кит микс — 200к</li>
-      <li>Кит iqoo — 300к</li>
-      <li>Кит боты бота — 10к</li>
-      <li>Кит спонсера — 300к</li>
-      <li>Кит демона (не клан) — 120к</li>
-      <li>Кит сеферити — 70к</li>
-      <li>Кит banmax777 — 130к</li>
-      <li>Кит banmax777 2.0 — 250к</li>
-    </ul>
-    <div style="margin-top:20px; padding:15px; background:#fff9c4; border:1px dashed gold; border-radius:8px;">
-      <h2 style="color:gold; text-shadow:1px 1px 2px black;">🔥 ОСОБОЕ ПРЕДЛОЖЕНИЕ 🔥</h2>
-      <p style="font-size:1.2em;"><b>Кит клана демона — 1 500 000!</b></p>
-      <p style="color:darkred; font-weight:bold;">Только сегодня!</p>
-    </div>
-  </div>
+<head>
+  <meta charset="utf-8">
+  <title>kito4kashop — магазин китов</title>
+</head>
+<body style="text-align:center; font-family:Arial, sans-serif; background:#f5f5f5;">
+  <h1 style="color:#333;">🗡 kito4kashop</h1>
+  <p style="color:#666;">Выбери кит и оставь заявку!</p>
 
-  <h3 style="margin-top:30px;">Хочешь купить? Напиши ник и товар:</h3>
-  <form action="/buy" method="POST" style="display:inline-block;">
-    <input type="text" name="nickname" placeholder="Твой ник в игре" required style="padding:8px; margin-right:5px;">
-    <input type="text" name="item" placeholder="Какой кит" required style="padding:8px; margin-right:5px;">
-    <button type="submit" style="padding:8px 16px;">Отправить заявку</button>
+  <form action="/buy" method="POST" style="background:white; padding:20px; display:inline-block; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+    <label style="display:block; margin-bottom:8px; font-weight:bold; color:#333;">Твой ник в игре:</label>
+    <input type="text" name="nickname" placeholder="Твой ник" required style="padding:10px; width:250px; border:1px solid #ccc; border-radius:4px;"><br><br>
+
+    <label style="display:block; margin-bottom:8px; font-weight:bold; color:#333;">Что хочешь купить:</label>
+    <select name="item" style="padding:10px; width:250px; border:1px solid #ccc; border-radius:4px;">
+      <option value="kit-demon-clan-1500k">Кит клана демона — <b style="color:#FFD700;">1 500 000</b></option>
+      <option value="kit-banmax777-130k">Кит banmax777 — <b style="color:#2E8B57;">130 000</b></option>
+      <option value="kit-banmax777-2.0-250k">Кит banmax777 2.0 — <b style="color:#2E8B57;">250 000</b></option>
+      <option value="kit-security-70k">Кит сеферити — <b style="color:#2E8B57;">70 000</b></option>
+      <option value="kit-demon-non-clan-120k">Кит демона (не клан) — <b style="color:#2E8B57;">120 000</b></option>
+      <option value="kit-sponsor-300k">Кит спонсера — <b style="color:#2E8B57;">300 000</b></option>
+      <option value="kit-iqqo-300k">Кит iqqo — <b style="color:#2E8B57;">300 000</b></option>
+      <option value="kit-bot-bot-10k">Кит боты бота — <b style="color:#2E8B57;">10 000</b></option>
+      <option value="kit-mix-200k">Кит микс — <b style="color:#2E8B57;">200 000</b></option>
+      <option value="kit-toxic-120k">Кит токсик — <b style="color:#2E8B57;">120 000</b></option>
+    </select><br><br>
+
+    <button type="submit" style="margin-top:15px; padding:12px 30px; background:#d9534f; color:white; border:none; border-radius:5px; font-size:16px; cursor:pointer;">Отправить заявку</button>
   </form>
 
-  <p style="margin-top:15px;"><a href="/admin-login">🔐 Вход для админа</a></p>
+  <hr style="margin:30px auto; width:80%; border:0; border-top:1px solid #ddd;">
+  <a href="/admin-login" style="color:#d9534f; font-weight:bold;">Вход в админку</a>
 </body>
 </html>
