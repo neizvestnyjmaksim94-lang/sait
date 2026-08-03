@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Статус заказа</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f4f8; text-align: center; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+        h1 { color: #2c3e50; }
+        .message { font-size: 1.2rem; line-height: 1.6; margin: 20px 0; }
+        .details { background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: left; margin-bottom: 20px; }
+        a.btn { display: inline-block; background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        a.btn:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Статус твоего заказа</h1>
+
+        <div class="details">
+            <p><strong>ID заказа:</strong> #{{ order.id }}</p>
+            <p><strong>Ник:</strong> {{ order.nickname }}</p>
+            <p><strong>Товар:</strong> {{ order.item }}</p>
+        </div>
+
+        <!-- Тут выводится сообщение: одобрено / отклонено / ждёт -->
+        <div class="message">
+            {{ message | safe }}
+        </div>
+
+        <a href="/" class="btn">Вернуться в магазин</a>
+    </div>
+</body>
+</html>
