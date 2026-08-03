@@ -1,16 +1,17 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session
 from functools import wraps
 
 app = Flask(__name__)
-# Секрет для работы сессий (не меняй, он нужен, чтобы сайт помнил, что ты вошёл)
-app.secret_key = 'kito4kashop-super-secure-2026'
+# Секрет для сессий. Лучше тоже вынести в переменные, но для теста можно оставить
+app.secret_key = os.environ.get('SECRET_KEY', 'kito4kashop-super-secure-2026')
 
-# --- НАСТРОЙКИ АДМИНОВ (МЕНЯЙ ТОЛЬКО ПАРОЛИ ЗДЕСЬ!) ---
-ADMINS = {
-    'banmax777': {'password': 'SUPER_SECRET_CHANGE_ME', 'role': 'main'},   # Главный
-    'lox55':      {'password': 'LATER_PASSWORD_CHANGE_ME',  'role': 'helper'} # Помощник
-}
-# ---------------------------------------------------------
+# Пароли берём из переменных окружения (их ты задашь в Render)
+ADMIN_USER_MAIN = 'banmax777'
+ADMIN_PASS_MAIN = os.environ['ADMIN_PASS_MAIN']
+
+ADMIN_USER_HELPER = 'lox55'
+ADMIN_PASS_HELPER = os.environ['ADMIN_PASS_HELPER']
 
 # Хранилище заявок (исчезнет при перезапуске Render — это нормально для теста)
 orders = []
@@ -30,15 +31,21 @@ def admin_login():
     if request.method == 'POST':
         user = request.form.get('user')
         password = request.form.get('password')
-        
-        # Проверяем, есть ли такой пользователь и совпадает ли пароль
-        if user in ADMINS and ADMINS[user]['password'] == password:
+
+        # Проверяем главного админа
+        if user == ADMIN_USER_MAIN and password == ADMIN_PASS_MAIN:
             session['username'] = user
-            session['user_role'] = ADMINS[user]['role']
+            session['user_role'] = 'main'
             return redirect(url_for('admin'))
-        else:
-            error = 'Неверный логин или пароль!'
-    
+
+        # Проверяем помощника
+        if user == ADMIN_USER_HELPER and password == ADMIN_PASS_HELPER:
+            session['username'] = user
+            session['user_role'] = 'helper'
+            return redirect(url_for('admin'))
+
+        error = 'Неверный логин или пароль!'
+
     return f'''
     <form method="POST" style="text-align:center; margin-top:50px;">
       <h2>Вход в админку kito4kashop</h2>
@@ -73,15 +80,14 @@ def buy():
 def admin():
     username = session.get('username')
     role = session.get('user_role')
-    
-    # Красивая надпись в зависимости от роли
+
     if role == 'main':
         welcome_msg = f'🛡 Вы вошли как ГЛАВНЫЙ АДМИНИСТРАТОР ({username})'
         role_color = '#d9534f'
     else:
         welcome_msg = f'🧑‍🔧 Вы вошли как ПОМОЩНИК ({username})'
         role_color = '#5bc0de'
-    
+
     return render_template('admin.html', orders=orders, welcome_msg=welcome_msg, role_color=role_color)
 
 @app.route('/approve', methods=['POST'])
@@ -89,7 +95,7 @@ def admin():
 def approve():
     order_id = int(request.form.get('order_id'))
     action = request.form.get('action')
-    
+
     for order in orders:
         if order['id'] == order_id:
             order['status'] = 'approved' if action == 'approve' else 'rejected'
