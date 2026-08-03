@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Админка kito4kashop</title>
+</head>
+<body>
+  <div style="text-align:center; padding:20px;">
+    <h1>{{ welcome_msg }}</h1>
+    <a href="/logout" style="color:#999;">Выйти</a>
+    <hr>
+
+    <table style="margin:20px auto; border-collapse:collapse; text-align:left;">
+      <thead>
+        <tr style="background:#eee;">
+          <th style="padding:10px; border:1px solid #ccc;">ID</th>
+          <th style="padding:10px; border:1px solid #ccc;">Ник</th>
+          <th style="padding:10px; border:1px solid #ccc;">Товар</th>
+          <th style="padding:10px; border:1px solid #ccc;">Статус</th>
+          <th style="padding:10px; border:1px solid #ccc;">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td style="padding:10px; border:1px solid #ccc;">{{ order.id }}</td>
+          <td style="padding:10px; border:1px solid #ccc;">{{ order.nickname }}</td>
+          <td style="padding:10px; border:1px solid #ccc;">{{ order.item_name }}</td>
+          <td style="padding:10px; border:1px solid #ccc; color:#999;">{{ order.status }}</td>
+          <td style="padding:10px; border:1px solid #ccc;">
+            {% if order.status == 'pending' %}
+            <form action="/approve" method="POST" style="display:inline;">
+              <input type="hidden" name="order_id" value="{{ order.id }}">
+              <input type="hidden" name="action" value="approve">
+              <button type="submit" style="padding:5px 10px; background:green; color:white; border:none;">Одобрить</button>
+            </form>
+            <form action="/approve" method="POST" style="display:inline;">
+              <input type="hidden" name="order_id" value="{{ order.id }}">
+              <input type="hidden" name="action" value="reject">
+              <button type="submit" style="padding:5px 10px; background:red; color:white; border:none;">Отклонить</button>
+            </form>
+            {% else %}
+            {{ order.status }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if not orders %}
+    <p>Пока нет заявок.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
