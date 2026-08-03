@@ -2,38 +2,50 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = 'kito4kashop-secret-key-change-later'  # нужен для работы сессий
+# Секрет для работы сессий (не меняй, он нужен, чтобы сайт помнил, что ты вошёл)
+app.secret_key = 'kito4kashop-super-secure-2026'
 
-# Простая база заявок (в памяти, исчезнет после перезапуска, но для теста идеально)
+# --- НАСТРОЙКИ АДМИНОВ (МЕНЯЙ ТОЛЬКО ПАРОЛИ ЗДЕСЬ!) ---
+ADMINS = {
+    'banmax777': {'password': 'SUPER_SECRET_CHANGE_ME', 'role': 'main'},   # Главный
+    'lox55':      {'password': 'LATER_PASSWORD_CHANGE_ME',  'role': 'helper'} # Помощник
+}
+# ---------------------------------------------------------
+
+# Хранилище заявок (исчезнет при перезапуске Render — это нормально для теста)
 orders = []
 next_id = 1
-
-# --- Защита админки (Basic Auth) ---
-ADMIN_USER = 'admin'
-ADMIN_PASS = '12345'  # ⚠️ Поставь свой пароль!
 
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('is_admin'):
+        if 'user_role' not in session:
             return redirect(url_for('admin_login'))
         return f(*args, **kwargs)
     return decorated_function
 
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
+    error = None
     if request.method == 'POST':
         user = request.form.get('user')
         password = request.form.get('password')
-        if user == ADMIN_USER and password == ADMIN_PASS:
-            session['is_admin'] = True
+        
+        # Проверяем, есть ли такой пользователь и совпадает ли пароль
+        if user in ADMINS and ADMINS[user]['password'] == password:
+            session['username'] = user
+            session['user_role'] = ADMINS[user]['role']
             return redirect(url_for('admin'))
-    return '''
-    <form method="POST">
+        else:
+            error = 'Неверный логин или пароль!'
+    
+    return f'''
+    <form method="POST" style="text-align:center; margin-top:50px;">
       <h2>Вход в админку kito4kashop</h2>
-      <input name="user" placeholder="Логин" required><br><br>
-      <input type="password" name="password" placeholder="Пароль" required><br><br>
-      <button type="submit">Войти</button>
+      <input name="user" placeholder="Логин" required style="padding:8px;"><br><br>
+      <input type="password" name="password" placeholder="Пароль" required style="padding:8px;"><br><br>
+      <button type="submit" style="padding:10px 20px; background:#333; color:white;">Войти</button>
+      {f'<p style="color:red;">{error}</p>' if error else ''}
     </form>
     '''
 
@@ -41,7 +53,6 @@ def admin_login():
 def shop():
     return render_template('shop.html')
 
-# Обработка заявки на покупку
 @app.route('/buy', methods=['POST'])
 def buy():
     global next_id
@@ -57,18 +68,27 @@ def buy():
         next_id += 1
     return redirect('/')
 
-# Страница админки
 @app.route('/admin')
 @login_required
 def admin():
-    return render_template('admin.html', orders=orders)
+    username = session.get('username')
+    role = session.get('user_role')
+    
+    # Красивая надпись в зависимости от роли
+    if role == 'main':
+        welcome_msg = f'🛡 Вы вошли как ГЛАВНЫЙ АДМИНИСТРАТОР ({username})'
+        role_color = '#d9534f'
+    else:
+        welcome_msg = f'🧑‍🔧 Вы вошли как ПОМОЩНИК ({username})'
+        role_color = '#5bc0de'
+    
+    return render_template('admin.html', orders=orders, welcome_msg=welcome_msg, role_color=role_color)
 
-# Одобрить или отклонить заявку
 @app.route('/approve', methods=['POST'])
 @login_required
 def approve():
     order_id = int(request.form.get('order_id'))
-    action = request.form.get('action')  # 'approve' или 'reject'
+    action = request.form.get('action')
     
     for order in orders:
         if order['id'] == order_id:
@@ -76,10 +96,9 @@ def approve():
             break
     return redirect(url_for('admin'))
 
-# Выход из админки
 @app.route('/logout')
 def logout():
-    session.pop('is_admin', None)
+    session.clear()
     return redirect(url_for('shop'))
 
 if __name__ == '__main__':
