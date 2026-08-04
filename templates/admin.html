@@ -62,12 +62,10 @@
             <form method="POST" action="{{ url_for('admin') }}">
                 <div class="form-group">
                     <label for="login">Логин</label>
-                    <!-- Убрали подсказку с логинами -->
                     <input type="text" id="login" name="login" required placeholder="">
                 </div>
                 <div class="form-group">
                     <label for="password">Пароль</label>
-                    <!-- Убрали подсказку -->
                     <input type="password" id="password" name="password" required placeholder="">
                 </div>
                 <button type="submit" class="btn-login">Войти</button>
@@ -75,6 +73,7 @@
         </div>
 
     {% else %}
+        <!-- Залогиненный вид -->
         <h2>Заказы на рассмотрении</h2>
         <p><strong>Тип аккаунта:</strong> {{ account_type }}</p>
 
@@ -84,7 +83,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Никнейм</th>
-                        <th>Товар</th>
+                        <th>Товар/Постройка</th>
                         <th>Статус</th>
                         <th>Действия</th>
                     </tr>
@@ -107,13 +106,15 @@
                     {% endfor %}
                 </tbody>
             </table>
-
-            <div class="logout-block">
-                <a href="{{ url_for('logout') }}" class="btn-logout">❌ Выйти из админки</a>
-            </div>
         {% else %}
             <p style="text-align:center; padding: 40px; color: #777;">Нет заказов на рассмотрении.</p>
         {% endif %}
+
+        <!-- Кнопка ВЫХОДА — теперь всегда видна, когда админ залогинен -->
+        <div class="logout-block">
+            <a href="{{ url_for('logout') }}" class="btn-logout">❌ Выйти из админки</a>
+        </div>
+
     {% endif %}
 </div>
 </body>
