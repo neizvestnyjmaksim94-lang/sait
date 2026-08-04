@@ -147,6 +147,11 @@ def update_status():
         db.close()
 
     return redirect(url_for('admin'))
+# --- ТОЛЬКО ВЫХОД (без построек) ---
+@app.route('/admin/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('admin'))
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
