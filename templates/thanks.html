@@ -3,30 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Статус заказа</title>
+
+    <!-- АВТООБНОВЛЕНИЕ КАЖДЫЕ 10 СЕКУНД -->
+    <meta http-equiv="refresh" content="10">
+
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 40px; text-align: center; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; }
-        h1 { color: #333; }
-        .status-pending { color: orange; font-weight: bold; }
-        .status-accepted { color: green; font-weight: bold; }
-        .status-rejected { color: red; font-weight: bold; }
-        .reason { margin-top: 15px; padding: 15px; background: #fff3cd; border: 1px solid #ffeeba; color: #856404; border-radius: 5px; text-align: left; display: inline-block; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        .status-box {
+            padding: 15px; border-radius: 6px; color: white; font-weight: bold; text-align: center; margin-bottom: 20px;
+        }
+        .status-pending { background-color: #ffc107; color: #000; }
+        .status-accepted { background-color: #28a745; }
+        .status-rejected { background-color: #dc3545; }
+        .info-row { margin-bottom: 12px; }
+        .label { font-weight: bold; color: #555; }
+        .btn-back {
+            display: inline-block; margin-top: 20px; padding: 10px 20px;
+            background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;
+        }
+        .btn-back:hover { background-color: #0056b3; }
+        .auto-refresh-note { font-size: 13px; color: #777; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Статус вашего заказа</h1>
-        <p>Никнейм: <strong>{{ nickname }}</strong></p>
-        <p>Товар/Постройка: <strong>{{ item }}</strong></p>
-        <p class="status-{{ status }}">Статус: {{ status }}</p>
+    <div class="container">
+        <h1>📦 Статус заказа</h1>
 
-        {% if status == 'rejected' and admin_comment %}
-            <div class="reason">
-                Причина отказа: {{ admin_comment }}
+        <!-- Блок со статусом (цвет зависит от статуса) -->
+        <div class="status-box status-{{ status }}">
+            Статус: {{ status|upper }}
+        </div>
+
+        <div class="info-row">
+            <span class="label">ID заказа:</span> {{ order_id }}
+        </div>
+        <div class="info-row">
+            <span class="label">Никнейм:</span> {{ nickname }}
+        </div>
+        <div class="info-row">
+            <span class="label">Товар:</span> {{ item }}
+        </div>
+
+        {% if admin_comment %}
+            <div class="info-row" style="border-top:1px solid #eee; padding-top:15px;">
+                <span class="label">Комментарий админа (при отказе):</span><br>
+                <strong>{{ admin_comment }}</strong>
             </div>
-        {% elif status == 'rejected' %}
-            <p style="color: red;">Заказ отклонён (без комментария).</p>
         {% endif %}
+
+        <a href="/" class="btn-back">← Вернуться в магазин</a>
+
+        <p class="auto-refresh-note">Автообновление страницы каждые 10 секунд.</p>
     </div>
 </body>
 </html>
