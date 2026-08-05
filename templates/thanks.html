@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Статус заказа</title>
-    <!-- Запрет кэша, чтобы статус обновлялся при каждом заходе -->
+
+    <!-- Запрет кэша, чтобы не показывать старую версию страницы -->
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+
     <style>
         body {
             font-family: 'Orbitron', sans-serif;
@@ -59,7 +61,43 @@
             50% { box-shadow: 0 0 20px rgba(40, 167, 69, 0.8); }
             100% { box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
         }
+
+        /* Таймер до следующего обновления (для удобства) */
+        #reload-timer {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #888;
+            text-align: center;
+        }
     </style>
+
+    <!-- АВТООБНОВЛЕНИЕ КАЖДЫЕ 10 СЕКУНД -->
+    <script>
+        let seconds = 10;
+        const timerEl = document.getElementById('reload-timer');
+
+        function startTimer() {
+            seconds = 10;
+            updateTimer();
+            const interval = setInterval(() => {
+                seconds--;
+                updateTimer();
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            if (timerEl) {
+                timerEl.textContent = 'Страница обновится автоматически через ' + seconds + ' сек.';
+            }
+        }
+
+        // Запускаем сразу при загрузке
+        startTimer();
+    </script>
 </head>
 <body>
 
@@ -79,7 +117,7 @@
                 <strong>Статус:</strong>
                 {% if status == 'pending' %}
                     <span class="status-pending">Ожидает обработки...</span>
-                    <p style="font-size:13px; color:#888;">Админ скоро примет решение. Обнови страницу позже.</p>
+                    <p style="font-size:13px; color:#888;">Админ скоро примет решение. Страница обновится сама.</p>
                 {% elif status == 'accepted' %}
                     <span class="status-accepted">✅ ЗАКАЗ ПРИНЯТ!</span>
 
@@ -98,7 +136,8 @@
             </p>
         {% endif %}
 
-        <!-- КНОПКУ НАЗАД УБРАЛИ — НИКАКОГО "Вернуться в магазин" -->
+        <!-- Таймер — видно, сколько осталось до автообновления -->
+        <div id="reload-timer"></div>
     </div>
 
 </body>
