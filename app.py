@@ -79,34 +79,30 @@ def admin():
     pass_banmax = os.environ.get('ADMIN_PASS_BANMAX', '')
     pass_lox55 = os.environ.get('ADMIN_PASS_LOX55', '')
 
+    # Попытка входа
     if request.method == 'POST':
         login = request.form.get('login', '').strip()
         password = request.form.get('password', '').strip()
 
-        # ИСПРАВЛЕНО: banmax777 вместо banmax
         if (login == 'banmax777' and password == pass_banmax) or \
            (login == 'lox55' and password == pass_lox55):
             session['admin_logged_in'] = True
             session['admin_user'] = login
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM orders ORDER BY id DESC')
-            orders = cur.fetchall()
-            conn.close()
         else:
             error = "Неверный логин или пароль"
 
-    if request.method == 'GET' and session.get('admin_logged_in'):
+    # Если уже залогинен — грузим только «ожидает»
+    if session.get('admin_logged_in'):
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT * FROM orders ORDER BY id DESC')
+        # Показываем только pending — поэтому после действия заказ исчезает из списка
+        cur.execute('SELECT * FROM orders WHERE status = ? ORDER BY id DESC', ('pending',))
         orders = cur.fetchall()
         conn.close()
+        return render_template('admin.html', orders=orders, error=None)
 
-    # Если есть заказы — показываем таблицу, иначе форму входа
-    if orders:
-        return render_template('admin.html', orders=orders)
-    return render_template('admin.html', error=error)
+    # Если не залогинен — показываем форму входа
+    return render_template('admin.html', orders=[], error=error)
 
 @app.route('/admin/accept/<int:order_id>', methods=['POST'])
 def accept_order(order_id):
