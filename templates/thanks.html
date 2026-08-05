@@ -68,58 +68,43 @@
             font-size: 13px;
         }
 
-        .btn-back {
-            display: inline-block;
-            padding: 14px 30px;
-            background: linear-gradient(180deg, #ffd700 0%, #d4af37 100%);
-            color: #000;
-            text-decoration: none;
-            border-radius: 6px;
+        .note-lock {
+            margin-top: 25px;
+            font-size: 16px;
+            color: #ffd700;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            transition: transform 0.1s, box-shadow 0.2s;
-        }
-
-        .btn-back:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
         }
 
         .auto-note {
-            margin-top: 20px;
-            font-size: 12px;
+            margin-top: 10px;
+            font-size: 11px;
             color: #666;
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>📦 Статус заказа</h1>
+        <h1>Статус заказа</h1>
 
-        <div class="status-box status-{{ status }}">
-            Статус: {{ status|upper }}
+        <div class="status-box {% if status == 'pending' %}status-pending{% elif status == 'accepted' %}status-accepted{% else %}status-rejected{% endif %}">
+            {% if status == 'pending' %}Ожидает обработки{% elif status == 'accepted' %}Принят{% else %}Отклонён{% endif %}
         </div>
 
-        <div class="info-row">
-            <span class="label">ID заказа:</span> {{ order_id }}
-        </div>
-        <div class="info-row">
-            <span class="label">Никнейм:</span> {{ nickname }}
-        </div>
-        <div class="info-row">
-            <span class="label">Товар:</span> {{ item }}
-        </div>
+        <div class="info-row"><span class="label">ID заказа:</span> #{{ order_id }}</div>
+        <div class="info-row"><span class="label">Никнейм:</span> {{ nickname }}</div>
+        <div class="info-row"><span class="label">Товар:</span> {{ item }}</div>
 
         {% if admin_comment %}
-            <div class="info-row" style="border-top:1px solid #333; padding-top:12px;">
-                <span class="label">Комментарий админа:</span><br>
-                <strong>{{ admin_comment }}</strong>
+            <div class="info-row" style="border-top:1px solid #333; padding-top:8px;">
+                <span class="label">Комментарий админа:</span> {{ admin_comment }}
             </div>
         {% endif %}
 
-        <a href="/" class="btn-back">← Вернуться в магазин</a>
-        <p class="auto-note">Автообновление страницы каждые 10 сек.</p>
+        <!-- Убрали кнопку «Вернуться». Теперь это важное сообщение -->
+        <div class="note-lock">Не закрывай это окно</div>
+        <p class="auto-note">Страница обновляется автоматически каждые 10 сек.</p>
     </div>
 </body>
 </html>
