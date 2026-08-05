@@ -2,31 +2,166 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Магазин</title>
+    <title>Kito4kaShop | Магазин китов</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 40px; text-align: center; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: inline-block; text-align: left; max-width: 400px; width: 100%; }
-        h1 { color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #0f0f11;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .shop-card {
+            background: #1a1a1d;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
+            border: 2px solid #333;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .shop-header {
+            margin-top: 0;
+            color: #ffd700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 28px;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .shop-header::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #aaa;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: #111;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffd700%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+        }
+
+        .price-hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        button.buy-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(180deg, #ffd700 0%, #d4af37 100%);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.1s, box-shadow 0.2s;
+            font-family: inherit;
+        }
+
+        button.buy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        button.buy-btn:active {
+            transform: translateY(0);
+        }
+
+        .kit-highlight {
+            color: #ffd700;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🛍 Магазин товаров</h1>
+    <div class="shop-card">
+        <h1 class="shop-header">Kito4kaShop</h1>
         <form action="/buy" method="POST">
             <div class="form-group">
                 <label for="nickname">Твой никнейм</label>
-                <input type="text" id="nickname" name="nickname" required placeholder="Например: Player123">
+                <input type="text" id="nickname" name="nickname" required placeholder="Banmax777">
             </div>
+
             <div class="form-group">
-                <label for="item">Какой товар хочешь купить</label>
-                <input type="text" id="item" name="item" required placeholder="Название товара">
+                <label for="item">Выбери кит</label>
+                <select id="item" name="item" required>
+                    <option value="" disabled selected>— Выбери кит —</option>
+                    
+                    <!-- ТОПОВЫЙ КИТ: Клан Демон -->
+                    <option value="kit_clan_demon" class="kit-highlight">🔥 Кит Клана Демон (1 500 000 ₽)</option>
+
+                    <!-- Остальные киты -->
+                    <option value="kit_banmax_2_0">Кит Banmax777 2.0 (250 000 ₽)</option>
+                    <option value="kit_toxic">Кит Токсик (120 000 ₽)</option>
+                    <option value="kit_mix">Кит Микс (200 000 ₽)</option>
+                    <option value="kit_iqoo">Кит IQOO (300 000 ₽)</option>
+                    <option value="kit_bots">Кит Боты Бота (10 000 ₽)</option>
+                    <option value="kit_sponsor">Кит Спонсера (300 000 ₽)</option>
+                    <option value="kit_demon">Кит Демон (не клан) (120 000 ₽)</option>
+                    <option value="kit_security">Кит Сеферити (70 000 ₽)</option>
+                    <option value="kit_banmax_base">Кит Banmax777 (130 000 ₽)</option>
+                </select>
+                <span class="price-hint">Цена указана в валюте сервера</span>
             </div>
-            <button type="submit">Оформить заказ</button>
+
+            <button type="submit" class="buy-btn">Купить кит</button>
         </form>
     </div>
 </body>
