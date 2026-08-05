@@ -1,15 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 
 app = Flask(__name__)
 
 def get_db_connection():
-    conn = sqlite3.connect('orders.db')
+    # timeout=10 помогает при блокировках SQLite на Render
+    conn = sqlite3.connect('orders.db', timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    """Создаёт таблицу, если её нет"""
+    """Создаёт таблицу orders, если её нет"""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -24,7 +25,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Инициализируем БД при старте
+# Инициализируем БД при старте приложения
 init_db()
 
 @app.route('/')
@@ -75,7 +76,7 @@ def thanks():
 
 @app.route('/admin')
 def admin():
-    # Защита теперь на стороне Render, тут просто отдаём страницу
+    # Защита теперь на уровне Render, тут просто отдаём страницу
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
@@ -91,7 +92,8 @@ def accept_order(order_id):
     cur.execute('UPDATE orders SET status = ? WHERE id = ?', ('accepted', order_id))
     conn.commit()
     conn.close()
-    return redirect(url_for('admin'))
+    # Возвращаем JSON, чтобы JS мог обновить статус без перезагрузки
+    return jsonify({'status': 'ok', 'order_id': order_id, 'new_status': 'accepted'})
 
 @app.route('/admin/reject/<int:order_id>', methods=['POST'])
 def reject_order(order_id):
@@ -103,7 +105,7 @@ def reject_order(order_id):
                 ('rejected', comment, order_id))
     conn.commit()
     conn.close()
-    return redirect(url_for('admin'))
+    return jsonify({'status': 'ok', 'order_id': order_id, 'new_status': 'rejected'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
