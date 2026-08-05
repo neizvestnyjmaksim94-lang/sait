@@ -32,15 +32,6 @@ class Order(Base):
     item = Column(String)
     status = Column(String, default='pending')
     admin_comment = Column(String, nullable=True)  # <-- колонка для комментария
-
-# ⚠️ БЛОК МИГРАЦИИ: удаляет таблицу orders и создаёт заново (с колонкой admin_comment)
-# Удали эти 4 строки после первого успешного запуска на Render!
-with app.app_context():
-    Base.metadata.drop_all(bind=engine, tables=[Order.__table__])
-    Base.metadata.create_all(bind=engine)
-print("✅ Таблица orders пересоздана (drop + create).")
-# ⚠️ -----------------------------------------------------------------------------
-
 # Пароли берём из переменных окружения (Render)
 PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55')
 PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX')
