@@ -6,19 +6,20 @@ from sqlalchemy.ext.declarative import declarative_base
 
 app = Flask(__name__)
 
-# 1. SECRET_KEY: Берем из Render. Если нет (для тестов на ПК) - ставим заглушку.
-# На Render обязательно должна быть переменная SECRET_KEY, иначе вход в админку не сохранится!
+# SECRET_KEY: обязательно поставь в Render!
 secret_key_env = os.environ.get('SECRET_KEY')
 if not secret_key_env:
     app.secret_key = 'dev-only-key-change-on-render'
 else:
     app.secret_key = secret_key_env
 
-# 2. DATABASE_URL: Берем из Render (там уже лежит ссылка на базу)
+# DATABASE_URL: берём из Render
 db_url = os.getenv('DATABASE_URL')
 if db_url and db_url.startswith('postgres://'):
-    # Render иногда отдает старый формат, конвертируем в новый для SQLAlchemy
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
+
+if not db_url:
+    raise ValueError("Ошибка: не найдена переменная DATABASE_URL в настройках Render!")
 
 engine = create_engine(db_url)
 SessionLocal = sessionmaker(bind=engine)
@@ -30,13 +31,12 @@ class Order(Base):
     nickname = Column(String)
     item = Column(String)
     status = Column(String, default='pending')
+    admin_comment = Column(String, nullable=True)  # <-- комментарий админа при отказе
 
-# Создаем таблицы при старте (если их нет)
 with app.app_context():
     Base.metadata.create_all(engine)
 
-# 3. ПАРОЛИ АДМИНОВ: Берем ТОЧНО по именам из твоего скриншота!
-# Если в Render пусто - будет None, и вход не сработает (это правильно для безопасности)
+# Пароли берём из переменных окружения (Render)
 PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55')
 PASS_BANMAX = os.environ.get('ADMIN_PASS_BANMAX')
 
@@ -64,7 +64,6 @@ def buy():
     finally:
         db.close()
 
-    # Перенаправляем на страницу статуса с автообновлением
     return redirect(url_for('order_status', order_id=order_id))
 
 @app.route('/order-status/<int:order_id>')
@@ -83,6 +82,7 @@ def order_status(order_id):
         nickname=order.nickname,
         item=order.item,
         status=order.status,
+        admin_comment=order.admin_comment,  # <-- передаём комментарий
         order_id=order.id
     )
 
@@ -90,12 +90,11 @@ def order_status(order_id):
 def admin():
     account_type = session.get('account_type')
 
-    # Если пришли с POST (попытка входа)
+    # Если пришли с POST — попытка входа
     if request.method == 'POST':
         login_attempt = request.form.get('login')
         pass_attempt = request.form.get('password')
 
-        # Сравниваем с паролями ИЗ RENDER (переменные окружения)
         if login_attempt == 'lox55' and pass_attempt == PASS_LOX55:
             session['account_type'] = 'helper'
             return redirect(url_for('admin'))
@@ -104,30 +103,28 @@ def admin():
             session['account_type'] = 'main'
             return redirect(url_for('admin'))
 
-        # Если пароль не подошел - показываем форму снова (можно добавить сообщение об ошибке)
         return render_template('admin.html', logged_in=False, account_type=None, error="Неверный логин или пароль")
 
-    # Если уже залогинен - показываем заказы
+    # Если уже залогинен — показываем админку
     if account_type:
         db = SessionLocal()
         try:
-            # Показываем только ожидающие заказы
             orders = db.query(Order).filter_by(status='pending').order_by(Order.id.desc()).all()
         finally:
             db.close()
         return render_template('admin.html', logged_in=True, account_type=account_type, orders=orders)
 
-    # Не залогинен - форма входа
+    # Не залогинен и не POST — показываем форму входа
     return render_template('admin.html', logged_in=False, account_type=None, error=None)
 
 @app.route('/admin/update_status', methods=['POST'])
 def update_status():
-    # Защита: если нет сессии, кидаем в админку
     if not session.get('account_type'):
         return redirect(url_for('admin'))
 
     order_id = request.form.get('order_id')
     new_status = request.form.get('new_status')
+    comment = request.form.get('admin_comment')  # <-- читаем комментарий
 
     if not order_id or new_status not in ('accepted', 'rejected'):
         return "Неверные данные", 400
@@ -139,6 +136,8 @@ def update_status():
             return "Заказ не найден", 404
 
         order.status = new_status
+        if comment:
+            order.admin_comment = comment
         db.commit()
     except Exception as e:
         db.rollback()
@@ -147,7 +146,7 @@ def update_status():
         db.close()
 
     return redirect(url_for('admin'))
-# --- ТОЛЬКО ВЫХОД (без построек) ---
+
 @app.route('/admin/logout')
 def logout():
     session.clear()
