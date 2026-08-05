@@ -85,7 +85,7 @@ def admin():
         pass_banmax = os.environ.get('ADMIN_PASS_BANMAX', '')
         pass_lox55 = os.environ.get('ADMIN_PASS_LOX55', '')
 
-        if (login == 'banmax' and password == pass_banmax) or \
+        if (login == 'banmax777' and password == pass_banmax) or \
            (login == 'lox55' and password == pass_lox55):
             session['admin_logged_in'] = True
             session['admin_user'] = login
