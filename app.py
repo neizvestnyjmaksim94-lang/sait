@@ -4,7 +4,7 @@ import sqlite3
 app = Flask(__name__)
 
 def get_db_connection():
-    # timeout=10 помогает при блокировках SQLite на Render
+    # timeout=10 снижает риск «сервер перегружен» на Render
     conn = sqlite3.connect('orders.db', timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
@@ -52,9 +52,14 @@ def buy():
 
 @app.route('/thanks')
 def thanks():
-    order_id = request.args.get('order_id')
-    if not order_id:
+    order_id_param = request.args.get('order_id')
+    if not order_id_param:
         return "Нет ID заказа", 400
+
+    try:
+        order_id = int(order_id_param)
+    except ValueError:
+        return "Неверный ID заказа", 400
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -65,18 +70,18 @@ def thanks():
     if not order:
         return "Заказ не найден", 404
 
+    # ВАЖНО: для sqlite3.Row используем order['поле'], а не order.поле
     return render_template(
         'thanks.html',
-        order_id=order.id,
-        nickname=order.nickname,
-        item=order.item,
-        status=order.status,
-        admin_comment=order.admin_comment or ''
+        order_id=order['id'],
+        nickname=order['nickname'],
+        item=order['item'],
+        status=order['status'],
+        admin_comment=order['admin_comment'] or ''
     )
 
 @app.route('/admin')
 def admin():
-    # Защита теперь на уровне Render, тут просто отдаём страницу
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM orders ORDER BY id DESC')
@@ -92,7 +97,6 @@ def accept_order(order_id):
     cur.execute('UPDATE orders SET status = ? WHERE id = ?', ('accepted', order_id))
     conn.commit()
     conn.close()
-    # Возвращаем JSON, чтобы JS мог обновить статус без перезагрузки
     return jsonify({'status': 'ok', 'order_id': order_id, 'new_status': 'accepted'})
 
 @app.route('/admin/reject/<int:order_id>', methods=['POST'])
