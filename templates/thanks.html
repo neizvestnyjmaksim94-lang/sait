@@ -2,109 +2,104 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- ВАЖНО: обновляем с сохранением order_id -->
-    <meta http-equiv="refresh" content="10;url=/thanks?order_id={{ order_id }}">
-    <title>Статус заказа | Kito4kaShop</title>
+    <title>Статус заказа</title>
+    <!-- Запрет кэша, чтобы статус обновлялся при каждом заходе -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
-
         body {
             font-family: 'Orbitron', sans-serif;
-            background-color: #0f0f11;
+            background: #0f0f11;
             color: #e0e0e0;
-            margin: 0;
             padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0;
         }
-
-        .card {
-            background: #1a1a1d;
-            padding: 35px;
-            border-radius: 12px;
-            border: 2px solid #333;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
-            text-align: center;
+        .box {
             max-width: 500px;
-            width: 100%;
+            margin: 0 auto;
+            background: #1a1a1d;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
         }
-
         h1 {
             color: #ffd700;
-            text-transform: uppercase;
-            letter-spacing: 3px;
             margin-top: 0;
-            margin-bottom: 5px;
-        }
-
-        .status-box {
-            padding: 15px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-            margin: 20px 0;
             text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
         }
+        p { line-height: 1.6; }
 
-        .status-pending { background-color: #ffc107; color: #000; box-shadow: 0 0 15px rgba(255, 193, 7, 0.4); }
-        .status-accepted { background-color: #28a745; box-shadow: 0 0 15px rgba(40, 167, 69, 0.4); }
-        .status-rejected { background-color: #dc3545; box-shadow: 0 0 15px rgba(220, 53, 69, 0.4); }
+        .status-pending { color: #ffc107; font-weight: bold; }
+        .status-accepted { color: #28a745; font-weight: bold; font-size: 1.2em; }
+        .status-rejected { color: #dc3545; font-weight: bold; }
 
-        .info-row {
-            text-align: left;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
-        }
-
-        .label {
-            display: inline-block;
-            width: 140px;
-            font-weight: bold;
-            color: #aaa;
-            text-transform: uppercase;
-            font-size: 13px;
-        }
-
-        .note-lock {
+        /* Блок с призывом */
+        .urgent-call {
             margin-top: 25px;
-            font-size: 16px;
-            color: #ffd700;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            padding: 20px;
+            background: rgba(40, 167, 69, 0.15);
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+        .urgent-call strong {
+            display: block;
+            font-size: 1.3em;
+            color: #28a745;
+            margin-bottom: 10px;
         }
 
-        .auto-note {
-            margin-top: 10px;
-            font-size: 11px;
-            color: #666;
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(40, 167, 69, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Статус заказа</h1>
 
-        <div class="status-box {% if status == 'pending' %}status-pending{% elif status == 'accepted' %}status-accepted{% else %}status-rejected{% endif %}">
-            {% if status == 'pending' %}Ожидает обработки{% elif status == 'accepted' %}Принят{% else %}Отклонён{% endif %}
-        </div>
+    <div class="box">
+        <h1>Заказ #{{ order_id }}</h1>
 
-        <div class="info-row"><span class="label">ID заказа:</span> #{{ order_id }}</div>
-        <div class="info-row"><span class="label">Никнейм:</span> {{ nickname }}</div>
-        <div class="info-row"><span class="label">Товар:</span> {{ item }}</div>
+        {% if message == 'Заказ не найден' %}
+            <p style="color:#ff5252;">
+                <strong>Заказ не найден.</strong><br>
+                Проверьте правильность номера или свяжитесь с поддержкой.
+            </p>
+        {% else %}
+            <p><strong>Никнейм:</strong> {{ nickname }}</p>
+            <p><strong>Товар:</strong> {{ item }}</p>
 
-        {% if admin_comment %}
-            <div class="info-row" style="border-top:1px solid #333; padding-top:8px;">
-                <span class="label">Комментарий админа:</span> {{ admin_comment }}
-            </div>
+            <p>
+                <strong>Статус:</strong>
+                {% if status == 'pending' %}
+                    <span class="status-pending">Ожидает обработки...</span>
+                    <p style="font-size:13px; color:#888;">Админ скоро примет решение. Обнови страницу позже.</p>
+                {% elif status == 'accepted' %}
+                    <span class="status-accepted">✅ ЗАКАЗ ПРИНЯТ!</span>
+
+                    <div class="urgent-call">
+                        <strong>Твой заказ готов!</strong>
+                        <p>Беги скорее на варп <strong>kito4kashop</strong></p>
+                    </div>
+                {% elif status == 'rejected' %}
+                    <span class="status-rejected">❌ Отклонён</span>
+                    {% if admin_comment and admin_comment != '-' %}
+                        <br><small style="color:#aaa;">Причина: {{ admin_comment }}</small>
+                    {% endif %}
+                {% else %}
+                    {{ status }}
+                {% endif %}
+            </p>
         {% endif %}
 
-        <div class="note-lock">Не закрывай это окно</div>
-        <p class="auto-note">Страница обновляется автоматически каждые 10 сек.</p>
+        <!-- КНОПКУ НАЗАД УБРАЛИ — НИКАКОГО "Вернуться в магазин" -->
     </div>
+
 </body>
 </html>
