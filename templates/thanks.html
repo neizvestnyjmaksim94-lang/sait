@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="10">
+    <!-- ВАЖНО: обновляем с сохранением order_id -->
+    <meta http-equiv="refresh" content="10;url=/thanks?order_id={{ order_id }}">
     <title>Статус заказа | Kito4kaShop</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
@@ -102,7 +103,6 @@
             </div>
         {% endif %}
 
-        <!-- Кнопка «Вернуться в магазин» убрана -->
         <div class="note-lock">Не закрывай это окно</div>
         <p class="auto-note">Страница обновляется автоматически каждые 10 сек.</p>
     </div>
