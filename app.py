@@ -31,10 +31,15 @@ class Order(Base):
     nickname = Column(String)
     item = Column(String)
     status = Column(String, default='pending')
-    admin_comment = Column(String, nullable=True)  # <-- комментарий админа при отказе
+    admin_comment = Column(String, nullable=True)  # <-- колонка для комментария
 
+# ⚠️ БЛОК МИГРАЦИИ: удаляет таблицу orders и создаёт заново (с колонкой admin_comment)
+# Удали эти 4 строки после первого успешного запуска на Render!
 with app.app_context():
-    Base.metadata.create_all(engine)
+    Base.metadata.drop_all(bind=engine, tables=[Order.__table__])
+    Base.metadata.create_all(bind=engine)
+print("✅ Таблица orders пересоздана (drop + create).")
+# ⚠️ -----------------------------------------------------------------------------
 
 # Пароли берём из переменных окружения (Render)
 PASS_LOX55 = os.environ.get('ADMIN_PASS_LOX55')
@@ -82,7 +87,7 @@ def order_status(order_id):
         nickname=order.nickname,
         item=order.item,
         status=order.status,
-        admin_comment=order.admin_comment,  # <-- передаём комментарий
+        admin_comment=order.admin_comment,
         order_id=order.id
     )
 
