@@ -1,9 +1,8 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session, abort
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import sqlite3
 
 app = Flask(__name__)
-# Обязательно поставь случайную строку в Render как переменную SECRET_KEY
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-change-in-render')
 
 def get_db_connection():
@@ -76,20 +75,19 @@ def thanks():
 def admin():
     error = None
     orders = []
-    
-    # Если это POST (попытка входа)
+
+    pass_banmax = os.environ.get('ADMIN_PASS_BANMAX', '')
+    pass_lox55 = os.environ.get('ADMIN_PASS_LOX55', '')
+
     if request.method == 'POST':
         login = request.form.get('login', '').strip()
         password = request.form.get('password', '').strip()
 
-        pass_banmax = os.environ.get('ADMIN_PASS_BANMAX', '')
-        pass_lox55 = os.environ.get('ADMIN_PASS_LOX55', '')
-
+        # ИСПРАВЛЕНО: banmax777 вместо banmax
         if (login == 'banmax777' and password == pass_banmax) or \
            (login == 'lox55' and password == pass_lox55):
             session['admin_logged_in'] = True
             session['admin_user'] = login
-            # Если вход успешен, сразу грузим заказы
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute('SELECT * FROM orders ORDER BY id DESC')
@@ -98,7 +96,6 @@ def admin():
         else:
             error = "Неверный логин или пароль"
 
-    # Если это GET и пользователь уже залогинен — сразу грузим заказы
     if request.method == 'GET' and session.get('admin_logged_in'):
         conn = get_db_connection()
         cur = conn.cursor()
@@ -106,11 +103,9 @@ def admin():
         orders = cur.fetchall()
         conn.close()
 
-    # Если есть заказы (успешный вход или уже залогинен) — показываем админку
+    # Если есть заказы — показываем таблицу, иначе форму входа
     if orders:
         return render_template('admin.html', orders=orders)
-    
-    # Если заказов нет — показываем форму входа
     return render_template('admin.html', error=error)
 
 @app.route('/admin/accept/<int:order_id>', methods=['POST'])
