@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Админ-панель | Kito4kaShop</title>
+    <!-- Подключаем шрифт в стиле Minecraft/киберпанк -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 
@@ -24,54 +25,14 @@
             box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
         }
 
-        h1, h2 {
+        h1 {
             color: #ffd700;
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-top: 0;
         }
 
-        /* Форма входа (если админка без Basic Auth и ты хочешь форму) */
-        .login-form {
-            max-width: 360px;
-            margin: 0 auto 40px auto;
-        }
-        .form-group { margin-bottom: 15px; }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-            color: #aaa;
-            text-transform: uppercase;
-            font-size: 13px;
-        }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #444;
-            border-radius: 6px;
-            background: #111;
-            color: #fff;
-            font-family: inherit;
-        }
-        button.btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(180deg, #ffd700 0%, #d4af37 100%);
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            transition: transform 0.1s, box-shadow 0.2s;
-        }
-        button.btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-        }
-
-        /* Таблица заказов */
+        /* Стили для таблицы */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -93,9 +54,9 @@
         }
         tr:last-child td { border-bottom: none; }
 
-        /* Статусы */
+        /* Статусы заказов — яркие, сразу видно состояние */
         .status-pending {
-            background: rgba(255, 193, 7, 0.15);
+            background: rgba(255, 193, 7, 0.2);
             color: #ffc107;
             padding: 6px 12px;
             border-radius: 4px;
@@ -103,7 +64,7 @@
             text-transform: uppercase;
         }
         .status-accepted {
-            background: rgba(40, 167, 69, 0.15);
+            background: rgba(40, 167, 69, 0.2);
             color: #28a745;
             padding: 6px 12px;
             border-radius: 4px;
@@ -111,7 +72,7 @@
             text-transform: uppercase;
         }
         .status-rejected {
-            background: rgba(220, 53, 69, 0.15);
+            background: rgba(220, 53, 69, 0.2);
             color: #dc3545;
             padding: 6px 12px;
             border-radius: 4px;
@@ -119,7 +80,7 @@
             text-transform: uppercase;
         }
 
-        /* Кнопки действий */
+        /* Кнопки действий — в стиле магазина */
         .actions button {
             padding: 8px 16px;
             border: none;
@@ -129,7 +90,7 @@
             font-weight: bold;
             text-transform: uppercase;
             margin-right: 6px;
-            transition: transform 0.1s;
+            transition: transform 0.1s, box-shadow 0.2s;
         }
         .btn-accept {
             background: #28a745; color: #fff;
@@ -137,14 +98,18 @@
         .btn-reject {
             background: #dc3545; color: #fff;
         }
-        .actions button:hover { transform: scale(1.05); }
+        .actions button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 8px rgba(0,0,0,0.3);
+        }
 
-        /* Подвал таблицы */
+        /* Сообщение, если заказов нет */
         .no-orders {
             text-align: center;
-            padding: 40px;
+            padding: 60px;
             color: #666;
             font-style: italic;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -152,21 +117,7 @@
     <div class="container">
         <h1>🛠 Админ-панель Kito4kaShop</h1>
 
-        <!-- Если у тебя вход через форму (не Basic Auth) -->
-        {% if not logged_in %}
-        <form class="login-form" method="POST" action="/admin-login">
-            <div class="form-group">
-                <label for="username">Логин</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Пароль</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit" class="btn-submit">Войти</button>
-        </form>
-        {% else %}
-
+        <!-- Таблица заказов -->
         <table>
             <thead>
                 <tr>
@@ -174,7 +125,7 @@
                     <th>Никнейм</th>
                     <th>Товар</th>
                     <th>Статус</th>
-                    <th>Комментарий</th>
+                    <th>Комментарий админа</th>
                     <th>Действия</th>
                 </tr>
             </thead>
@@ -185,6 +136,8 @@
                         <td>#{{ order.id }}</td>
                         <td><strong>{{ order.nickname }}</strong></td>
                         <td>{{ order.item }}</td>
+                        
+                        <!-- Подсветка статуса цветом -->
                         <td>
                             {% if order.status == 'pending' %}
                                 <span class="status-pending">Ожидает</span>
@@ -194,6 +147,7 @@
                                 <span class="status-rejected">Отклонён</span>
                             {% endif %}
                         </td>
+
                         <td>
                             {% if order.admin_comment %}
                                 {{ order.admin_comment }}
@@ -201,11 +155,15 @@
                                 —
                             {% endif %}
                         </td>
+
+                        <!-- КНОПКИ: action точно совпадает с app.py -->
                         <td class="actions">
-                            <!-- Сюда можно подставить реальные URL, если у тебя есть маршруты accept/reject -->
+                            <!-- Кнопка ПРИНЯТЬ: POST на /admin/accept/<id> -->
                             <form method="POST" action="/admin/accept/{{ order.id }}" style="display:inline;">
                                 <button type="submit" class="btn-accept">Принять</button>
                             </form>
+
+                            <!-- Кнопка ОТКЛОНИТЬ: POST на /admin/reject/<id> -->
                             <form method="POST" action="/admin/reject/{{ order.id }}" style="display:inline;">
                                 <button type="submit" class="btn-reject">Отклонить</button>
                             </form>
@@ -213,12 +171,12 @@
                     </tr>
                     {% endfor %}
                 {% else %}
-                    <tr><td colspan="6" class="no-orders">Нет заказов</td></tr>
+                    <tr>
+                        <td colspan="6" class="no-orders">Пока нет заказов</td>
+                    </tr>
                 {% endif %}
             </tbody>
         </table>
-
-        {% endif %}
     </div>
 </body>
 </html>
