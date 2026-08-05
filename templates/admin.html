@@ -57,6 +57,7 @@
     {% endif %}
 
     {% if not logged_in %}
+        <!-- Форма входа -->
         <div class="login-form">
             <h2>Вход в админку</h2>
             <form method="POST" action="{{ url_for('admin') }}">
@@ -98,8 +99,21 @@
                             <td class="actions">
                                 <form action="{{ url_for('update_status') }}" method="POST" style="display:inline;">
                                     <input type="hidden" name="order_id" value="{{ order.id }}">
-                                    <button type="submit" name="new_status" value="accepted" class="btn-accept">✅ Принять</button>
-                                    <button type="submit" name="new_status" value="rejected" class="btn-reject">❌ Отклонить</button>
+                                    <input type="hidden" name="new_status" value="accepted">
+                                    <button type="submit" class="btn-accept">✅ Принять</button>
+                                </form>
+
+                                <!-- Кнопка «Отклонить» открывает поле для комментария -->
+                                <button type="button" class="btn-reject" onclick="toggleRejectForm({{ order.id }})">❌ Отклонить</button>
+
+                                <!-- Скрытая форма для отклонения с комментарием -->
+                                <form id="reject-form-{{ order.id }}" action="{{ url_for('update_status') }}" method="POST" 
+                                      style="display:none; margin-top:8px;" onsubmit="hideRejectForm({{ order.id }})">
+                                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                                    <input type="hidden" name="new_status" value="rejected">
+                                    <input type="text" name="admin_comment" placeholder="Причина отказа (необязательно)" 
+                                           style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                                    <button type="submit" class="btn-reject" style="margin-top:6px;">Подтвердить отказ</button>
                                 </form>
                             </td>
                         </tr>
@@ -114,8 +128,23 @@
         <div class="logout-block">
             <a href="{{ url_for('logout') }}" class="btn-logout">❌ Выйти из админки</a>
         </div>
-
     {% endif %}
 </div>
+
+<script>
+function toggleRejectForm(orderId) {
+    const form = document.getElementById('reject-form-' + orderId);
+    if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+function hideRejectForm(orderId) {
+    const form = document.getElementById('reject-form-' + orderId);
+    form.style.display = 'none';
+}
+</script>
 </body>
 </html>
